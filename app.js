@@ -4,6 +4,7 @@ const multer = require("multer")
 const path = require("path");
 const bodyParser = require('body-parser')
 const { Pool } = require('pg')
+const fs = require('fs')
 
 const app = express()
 app.use(cors())
@@ -13,7 +14,7 @@ const port = 3000
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "../RealtorApp/src/assets/images/apartments"); // Save uploaded files to the 'assets' folder
+    cb(null, "../RealtorAPI/assets/houses"); // Save uploaded files to the 'assets' folder
   },
   filename: function (req, file, cb) {
     const uniqueSuffix =
@@ -134,25 +135,48 @@ app.get('/api/users', (req, res) => {
 });
 
 
+app.get('/api/apartments', (req, res) => {
+  // Query the database using the connection pool
+  pool.query('SELECT * FROM apartments', (error, result) => {
+    if (error) {
+      console.error('Error executing query', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(result.rows);
+    }
+  });
+});
+
+
+
 
 app.post('/api/addNew/:category', upload.single("image"), async (req, res) => {
   console.log(req.file);
   const {category} = req.params;
   const houseName = req.body.houseName;
-  const imagesrc = 'src/assets/images/apartments/' + req.file.filename;
+  const imagesrc = 'src/assets/images/houses/' + req.file.filename;
   const description = req.body.description;
   const price = req.body.price; 
+
+  //saving the image file to different destinations
+  const imgfile = req.file;
+  saveFile(imgfile, '../RealtorApp/src/assets/images/houses')
+  saveFile(imgfile, '../RealtorAdmin/src/assets/images/houses')
 
   try {
     const result = await pool.query(`INSERT INTO public.${category}(houseName,imagesrc,description,price) VALUES ($1,$2,$3,$4) RETURNING *`, [houseName, imagesrc, description, price])
     const insertedRow = result.rows[0].username;
     res.status(201).json({ Msg: 'Added successfully!'});
   } catch (error) {
-    console.error(error);
+    console.error(error); 
     res.status(500).json({ Msg: 'An error occcured!'});
   }
-})
+});
 
+function saveFile(imgfile, destination){
+  filepath = path.join(destination, imgfile.filename);
+  fs.copyFileSync(imgfile.path, filepath);
+}
 
 // get list data from table and return array list(testing)
 // app.get('/api/data2', async (req, res) => {
