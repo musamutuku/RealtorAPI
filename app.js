@@ -34,7 +34,6 @@ const pool = new Pool({
 
 
 
-
 app.post('/api/submit', async (req, res) => {
   const newName = req.body.userName;
   const newEmail = req.body.userEmail;
@@ -135,23 +134,9 @@ app.get('/api/users', (req, res) => {
 });
 
 
-app.get('/api/apartments', (req, res) => {
-  // Query the database using the connection pool
-  pool.query('SELECT * FROM apartments', (error, result) => {
-    if (error) {
-      console.error('Error executing query', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    } else {
-      res.json(result.rows);
-    }
-  });
-});
-
-
 
 
 app.post('/api/addNew/:category', upload.single("image"), async (req, res) => {
-  console.log(req.file);
   const {category} = req.params;
   const houseName = req.body.houseName;
   const imagesrc = 'src/assets/images/houses/' + req.file.filename;
